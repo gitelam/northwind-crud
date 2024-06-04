@@ -1,51 +1,71 @@
 <?php
-
     include("database.php");
 
     $global = "";
     $error = false;
 
     if(isset($_REQUEST['register'])){
-        //all validations for all fields
 
-
-        $name = $_REQUEST['name'];
+        $firstname = $_REQUEST['firstname'];
         $surname = $_REQUEST['surname'];
         $email = $_REQUEST['email'];
         $password = $_REQUEST['password'];
-        $confirm = $_REQUEST['confirm_password'];
+        $confirm_password = $_REQUEST['confirm_password'];
         $staff = $_REQUEST['staff'];
 
+        //do strip_tags
+        $firstname = strip_tags($firstname);
+        $surname = strip_tags($surname);
+        $email = strip_tags($email);
+        $password = strip_tags($password);
+        $confirm_password = strip_tags($confirm_password);
+
+        //do msqli_real_escape_string
+        $firstname = mysqli_real_escape_string($connection, $firstname);
+        $surname = mysqli_real_escape_string($connection, $surname);
+        $email = mysqli_real_escape_string($connection, $email);
+        $password = mysqli_real_escape_string($connection, $password);
+        $confirm_password = mysqli_real_escape_string($connection, $confirm_password);
+
+        //filter validate email
+
+        if(!filter_var($password, FILTER_VALIDATE_EMAIL)){
+            $global = "Invalid email.";
+            $error = true;
+        }            
 
         //if all fields are filled
-        if($name != "" && $surname != "" && $email != "" && $password != "" && $confirm != "" && $staff != ""){
+        if($firstname != "" && $surname != "" && $email != "" && $password != "" && $confirm_password != "" && $staff != ""){
 
             //if password and confirm password are the same
-            if($password == $confirm){
+            if($password == $confirm_password){
 
                 //check if email is already registered
                 $sql = "SELECT * FROM users WHERE email = '$email'";
-                $result = $connection->query($sql);
+                $result = $connection -> query($sql);
 
-                if($result->num_rows > 0){
+                if($result -> num_rows > 0){
                     $global = "Email already registered.";
+                    $error = true;
                 }else{
                     //insert user into database
-                    $sql = "INSERT INTO users (name, surname, email, password, staff) VALUES ('$name', '$surname', '$email', '$password', '$staff')";
+                    $sql = "INSERT INTO users (Firstname, Surname, Email, Password, Staff) VALUES ('$firstname', '$surname', '$email', '$password', '$staff')";
+                    
                     if($connection->query($sql) === TRUE){
                         $global = "User registered successfully.";
+                        $error = false;
                     }else{
                         $global = "Error: " . $sql . "<br>" . $connection->error;
+                        $error = true;
                     }
-                }
 
+                }
             }else{
                 $global = "Passwords do not match.";
-                global $error;
                 $error = true;
             }
         }else{
-            $global = "Insert some information...";
+            $global = "Please fill all fields.";
         }
     }
 
@@ -53,9 +73,9 @@
 
 <html>
     <head>
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-        <title>Northwind shop.</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <title>Northwind shop.</title>
     </head>
 
     <body>
@@ -87,9 +107,9 @@
                         </div>
 
                         <div class="form-group my-4">
-                            
-                            <label class="text-secondary font-weight-bold" for="Name">Name</label>
-                            <input type="text" class="form-control" id="name" name="name">
+
+                            <label class="text-secondary font-weight-bold" for="firstname">Name</label>
+                            <input type="text" class="form-control" id="name" name="firstname">
                             
                             <label class="text-secondary font-weight-bold" for="surname">Surname</label>
                             <input type="text" class="form-control" id="surname" name="surname">
@@ -104,15 +124,18 @@
                             <input type="text" class="form-control" id="confirm" name="confirm_password">
                             
                             <label class="text-secondary font-weight-bold" for="staff">Account type</label>
+                            
                             <select class="form-control" id="staff" name="staff">
                                 <option value="0">Student</option>
                                 <option value="1">Staff</option>
                             </select>
+
                         </div>
 
                         <div class="w-100 d-flex justify-content-end">
                             <input type="submit" name="register"  class="btn btn-primary">
                         </div>
+
                     </form>
 
 
@@ -135,10 +158,13 @@
                 <div class="alert alert-danger" role="alert">
                     <?php echo $global; ?>
                 </div>
+
             <?php else:?>
+                
                 <div class="rounded bg-success text-white fw-bold p-4">
                     <?php echo $global; ?>
                 </div>
+            
             <?php endif?>
 
         </div>
